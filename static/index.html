@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BiblioSys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="page-login" class="page active">
+  <div class="login-bg"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+  <div class="login-card">
+    <div class="login-logo"><span class="logo-icon">📚</span><h1>BiblioSys</h1><p>Sistema de Gestão de Biblioteca</p></div>
+    <div class="form-group"><label>Usuário</label><input type="text" id="login-username" placeholder="nome de usuário" autocomplete="username"></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="login-senha" placeholder="••••••••"></div>
+    <div id="login-erro" class="erro-msg hidden"></div>
+    <button class="btn-primary full" onclick="fazerLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="page-app" class="page">
+  <!-- Mobile topbar -->
+  <div class="mobile-topbar" id="mobile-topbar">
+    <span class="mobile-logo">📚 BiblioSys</span>
+    <div class="mobile-actions">
+      <button onclick="showSection('livros')">📕 Livros</button>
+      <button onclick="showSection('pessoas')">👤 Pessoas</button>
+      <button onclick="showSection('emprestimos')">🔖 Empréstimos</button>
+      <button onclick="showSection('historico')">📋 Histórico</button>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo"><span>📚</span><span class="sidebar-title">BiblioSys</span></div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" onclick="showSection('dashboard')"><span class="nav-dot">◉</span>Dashboard</a>
+      <a href="#" class="nav-item" onclick="showSection('livros')"><span class="nav-dot">◉</span>Livros</a>
+      <a href="#" class="nav-item" onclick="showSection('pessoas')"><span class="nav-dot">◉</span>Pessoas</a>
+      <a href="#" class="nav-item" onclick="showSection('emprestimos')"><span class="nav-dot">◉</span>Empréstimos</a>
+      <a href="#" class="nav-item" onclick="showSection('historico')"><span class="nav-dot">◉</span>Histórico</a>
+      <a href="#" class="nav-item" id="nav-funcionarios" onclick="showSection('funcionarios')"><span class="nav-dot">◉</span>Funcionários</a>
+      <a href="#" class="nav-item" id="nav-config" onclick="showSection('config')"><span class="nav-dot">◉</span>Configurações</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info"><span id="user-nome">Admin</span><small id="user-email">@admin</small></div>
+        <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Topbar global fixa com temas -->
+  <div class="global-topbar">
+    <div class="topbar-themes">
+      <button class="theme-icon-btn" id="tema-light" onclick="setTema('light')" title="Tema Claro">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="theme-icon-btn" id="tema-dark" onclick="setTema('dark')" title="Tema Escuro">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="theme-icon-btn" id="tema-system" onclick="setTema('system')" title="Seguir Sistema">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <main class="main-content">
+
+    <!-- DASHBOARD -->
+    <section id="sec-dashboard" class="section active">
+      <div class="section-header">
+        <h2>Dashboard</h2>
+<span class="section-date" id="data-hoje"></span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card accent-green"><div class="stat-icon">📖</div><div class="stat-info"><span class="stat-num" id="stat-emprestados">–</span><span class="stat-label">Livros Emprestados</span></div></div>
+        <div class="stat-card accent-red clickable" onclick="abrirAtrasados()"><div class="stat-icon">⚠️</div><div class="stat-info"><span class="stat-num" id="stat-pendentes">–</span><span class="stat-label">Pendentes de Devolução</span></div><span class="stat-hint">Clique para ver</span></div>
+        <div class="stat-card accent-blue"><div class="stat-icon">📚</div><div class="stat-info"><span class="stat-num" id="stat-livros">–</span><span class="stat-label">Total de Livros</span></div></div>
+        <div class="stat-card accent-amber"><div class="stat-icon">👥</div><div class="stat-info"><span class="stat-num" id="stat-pessoas">–</span><span class="stat-label">Pessoas Cadastradas</span></div></div>
+      </div>
+      <div class="dashboard-row">
+        <div class="chart-card"><h3 class="chart-title">Situação do Acervo</h3>
+          <div class="chart-wrap"><canvas id="grafico-rosca"></canvas><div class="chart-center-label"><span id="chart-total-num">–</span><small>livros</small></div></div>
+          <div class="chart-legend" id="chart-legend"></div>
+        </div>
+        <div class="quick-actions-card"><h3>Ações Rápidas</h3>
+          <div class="actions-col">
+            <button class="action-btn" onclick="showSection('livros');setTimeout(()=>abrirModal('modal-livro'),80)"><span>📕</span>Cadastrar Livro</button>
+            <button class="action-btn" onclick="showSection('pessoas');setTimeout(()=>abrirModal('modal-pessoa'),80)"><span>👤</span>Cadastrar Pessoa</button>
+            <button class="action-btn" onclick="showSection('emprestimos');setTimeout(()=>{prepararModalEmprestimo();abrirModal('modal-emprestimo')},80)"><span>🔖</span>Novo Empréstimo</button>
+            <button class="action-btn" onclick="showSection('emprestimos')"><span>↩️</span>Ver Devoluções</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVROS -->
+    <section id="sec-livros" class="section">
+      <div class="section-header"><h2>Livros</h2><button class="btn-primary" onclick="limparFormLivro();abrirModal('modal-livro')">+ Novo Livro</button></div>
+      <div class="search-bar"><input type="text" id="search-livros" placeholder="Buscar por título, autor, editora ou ano..." oninput="filtrarLivros()"></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>Título</th><th>Autor</th><th>ISBN</th><th>Editora</th><th>Ano</th><th>Estoque</th><th>Disponível</th><th>Ações</th></tr></thead><tbody id="tbody-livros"></tbody></table></div>
+      <div class="pagination-bar" id="pag-livros"></div>
+    </section>
+
+    <!-- PESSOAS -->
+    <section id="sec-pessoas" class="section">
+      <div class="section-header"><h2>Pessoas</h2><button class="btn-primary" onclick="limparFormPessoa();abrirModal('modal-pessoa')">+ Nova Pessoa</button></div>
+      <div class="search-bar"><input type="text" id="search-pessoas" placeholder="Buscar por nome ou documento..." oninput="filtrarPessoas()"></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Documento</th><th>Ações</th></tr></thead><tbody id="tbody-pessoas"></tbody></table></div>
+      <div class="pagination-bar" id="pag-pessoas"></div>
+    </section>
+
+    <!-- EMPRÉSTIMOS -->
+    <section id="sec-emprestimos" class="section">
+      <div class="section-header"><h2>Empréstimos</h2><button class="btn-primary" onclick="prepararModalEmprestimo();abrirModal('modal-emprestimo')">+ Novo Empréstimo</button></div>
+      <div class="emp-toolbar">
+        <input type="text" id="search-emp" placeholder="Nome da pessoa ou livro..." oninput="aplicarFiltrosEmp()">
+        <div class="filter-date-group">
+          <label class="filter-date-label">Data do empréstimo</label>
+          <input type="date" id="filter-emp-data-emp" onchange="aplicarFiltrosEmp()">
+        </div>
+        <div class="filter-date-group">
+          <label class="filter-date-label">Previsão de devolução</label>
+          <input type="date" id="filter-emp-data-dev" onchange="aplicarFiltrosEmp()">
+        </div>
+        <select id="filter-emp-status" onchange="aplicarFiltrosEmp()">
+          <option value="todos">Todos</option>
+          <option value="ativo">Ativos</option>
+          <option value="atrasado">Atrasados</option>
+          <option value="devolvido">Devolvidos</option>
+        </select>
+        <select id="sort-emp" onchange="aplicarFiltrosEmp()">
+          <option value="data-desc">Mais recentes primeiro</option>
+          <option value="data-asc">Mais antigos primeiro</option>
+          <option value="nome-az">Nome A → Z</option>
+          <option value="nome-za">Nome Z → A</option>
+        </select>
+      </div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>Pessoa</th><th>Livros</th><th>Funcionário</th><th>Emprestado</th><th>Previsão</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tbody-emprestimos"></tbody></table></div>
+      <div class="pagination-bar" id="pag-emprestimos"></div>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section id="sec-historico" class="section">
+      <div class="section-header"><h2>Histórico de Empréstimos</h2></div>
+      <div class="emp-toolbar">
+        <input type="text" id="search-hist" placeholder="Pessoa ou livro..." oninput="filtrarHistorico()">
+        <div class="filter-date-group">
+          <label class="filter-date-label">Data do empréstimo</label>
+          <input type="date" id="hist-data-emp" onchange="filtrarHistorico()">
+        </div>
+        <div class="filter-date-group">
+          <label class="filter-date-label">Data de devolução</label>
+          <input type="date" id="hist-data-dev" onchange="filtrarHistorico()">
+        </div>
+      </div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>Pessoa</th><th>Livro</th><th>Data Empréstimo</th><th>Previsão Devolução</th><th>Data Devolução</th><th>Situação</th></tr></thead><tbody id="tbody-historico"></tbody></table></div>
+      <div class="pagination-bar" id="pag-historico"></div>
+    </section>
+
+    <!-- FUNCIONÁRIOS -->
+    <section id="sec-funcionarios" class="section">
+      <div class="section-header"><h2>Funcionários</h2><button class="btn-primary" id="btn-novo-func" onclick="limparFormFuncionario();abrirModal('modal-funcionario')">+ Novo Funcionário</button></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>Nome</th><th>Usuário</th><th>Email</th><th>Perfil</th><th>Cadastrado em</th><th>Ações</th></tr></thead><tbody id="tbody-funcionarios"></tbody></table></div>
+      <div class="pagination-bar" id="pag-funcionarios"></div>
+    </section>
+
+    <!-- CONFIGURAÇÕES -->
+    <section id="sec-config" class="section">
+      <div class="section-header">
+        <h2>Configurações</h2>
+        <button class="btn-primary" id="btn-salvar-config" onclick="salvarConfig()" disabled style="opacity:.35">Salvar</button>
+      </div>
+      <div class="config-grid">
+        <div class="config-card">
+          <h3>⚙️ Empréstimos</h3>
+          <div class="form-group">
+            <label>Dias padrão para devolução</label>
+            <input type="number" id="cfg-dias" min="1" max="365" value="14" oninput="marcarConfigAlterada()">
+            <span class="campo-info" style="display:block;margin-top:4px">Prazo sugerido ao criar um novo empréstimo</span>
+          </div>
+        </div>
+        <div class="config-card">
+          <h3>📄 Paginação</h3>
+          <p class="config-desc">Quantidade de registros exibidos por página nas listagens.</p>
+          <div class="form-group">
+            <label>Registros por página</label>
+            <select id="cfg-paginacao" onchange="marcarConfigAlterada()">
+              <option value="5">5 por página</option>
+              <option value="10" selected>10 por página</option>
+              <option value="20">20 por página</option>
+              <option value="50">50 por página</option>
+              <option value="100">100 por página</option>
+            </select>
+            <span class="campo-info" style="display:block;margin-top:4px">Aplicado em: Livros, Pessoas, Empréstimos, Histórico e Funcionários</span>
+          </div>
+        </div>
+        <div class="config-card">
+          <h3>🖨️ Modelo de Impressão</h3>
+          <p class="config-desc">Formato padrão ao imprimir comprovantes de empréstimo.</p>
+          <div class="form-group">
+            <label>Modelo</label>
+            <select id="cfg-modelo" onchange="marcarConfigAlterada()">
+              <option value="a4">📄 Folha A4</option>
+              <option value="termico">🧻 Papel Térmico (80mm)</option>
+            </select>
+          </div>
+        </div>
+        <div class="config-card">
+          <h3>📋 Reimprimir Comprovante</h3>
+          <p class="config-desc">Selecione um empréstimo ativo para reimprimir o comprovante.</p>
+          <div class="form-group">
+            <label>Empréstimo</label>
+            <select id="cfg-emp-imprimir"><option value="">Selecione...</option></select>
+          </div>
+          <div class="config-card-footer">
+            <button class="btn-secondary" onclick="imprimirComprovanteConfig()">🖨️ Visualizar e Imprimir</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ══ MODAIS ══ -->
+<div id="toast" class="toast hidden"></div>
+
+<div id="modal-confirm" class="modal-overlay hidden">
+  <div class="modal modal-sm"><div class="modal-header"><h3 id="confirm-titulo">Confirmar</h3></div>
+  <div class="modal-body"><p id="confirm-msg"></p></div>
+  <div class="modal-footer"><button class="btn-secondary" onclick="resolverConfirm(false)">Cancelar</button><button class="btn-danger" id="confirm-sim" onclick="resolverConfirm(true)">Confirmar</button></div></div>
+</div>
+
+<div id="modal-logout" class="modal-overlay hidden">
+  <div class="modal modal-sm"><div class="modal-header"><h3>Sair do sistema</h3></div>
+  <div class="modal-body"><p>Deseja realmente encerrar a sua sessão no <strong>BiblioSys</strong>?</p></div>
+  <div class="modal-footer"><button class="btn-secondary" onclick="fecharModal('modal-logout')">Cancelar</button><button class="btn-danger" onclick="confirmarLogout()">Sim, sair</button></div></div>
+</div>
+
+<div id="modal-livro" class="modal-overlay hidden">
+  <div class="modal"><div class="modal-header"><h3 id="modal-livro-titulo">Cadastrar Livro</h3><button class="modal-close" onclick="fecharModal('modal-livro')">✕</button></div>
+  <div class="modal-body"><input type="hidden" id="livro-id">
+    <div class="form-row"><div class="form-group"><label>Título *</label><input type="text" id="livro-titulo" placeholder="Título do livro"></div><div class="form-group"><label>Autor *</label><input type="text" id="livro-autor" placeholder="Nome do autor"></div></div>
+    <div class="form-row"><div class="form-group"><label>ISBN</label><input type="text" id="livro-isbn"></div><div class="form-group"><label>Editora</label><input type="text" id="livro-editora"></div></div>
+    <div class="form-row"><div class="form-group"><label>Ano</label><input type="number" id="livro-ano"></div><div class="form-group"><label>Estoque</label><input type="number" id="livro-quantidade" min="1" value="1"><span id="livro-qtd-hint" class="campo-info hidden"></span></div></div>
+  </div>
+  <div class="modal-footer"><button class="btn-secondary" onclick="fecharModal('modal-livro')">Cancelar</button><button class="btn-primary" onclick="salvarLivro()">Salvar</button></div></div>
+</div>
+
+<div id="modal-pessoa" class="modal-overlay hidden">
+  <div class="modal"><div class="modal-header"><h3 id="modal-pessoa-titulo">Cadastrar Pessoa</h3><button class="modal-close" onclick="fecharModal('modal-pessoa')">✕</button></div>
+  <div class="modal-body"><input type="hidden" id="pessoa-id">
+    <div class="form-row"><div class="form-group full"><label>Nome *</label><input type="text" id="pessoa-nome" placeholder="Nome completo"></div></div>
+    <div class="form-row"><div class="form-group"><label>Email</label><input type="email" id="pessoa-email" placeholder="email@exemplo.com"><span id="pessoa-email-erro" class="campo-erro hidden"></span></div><div class="form-group"><label>Telefone</label><input type="text" id="pessoa-telefone" placeholder="(00) 00000-0000"></div></div>
+    <div class="form-row"><div class="form-group"><label>Documento</label><input type="text" id="pessoa-documento" placeholder="CPF/RG"></div><div class="form-group"><label>Endereço</label><input type="text" id="pessoa-endereco"></div></div>
+  </div>
+  <div class="modal-footer"><button class="btn-secondary" onclick="fecharModal('modal-pessoa')">Cancelar</button><button class="btn-primary" onclick="salvarPessoa()">Salvar</button></div></div>
+</div>
+
+<div id="modal-emprestimo" class="modal-overlay hidden">
+  <div class="modal modal-wide"><div class="modal-header"><h3>Novo Empréstimo</h3><button class="modal-close" onclick="fecharModal('modal-emprestimo')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-row"><div class="form-group"><label>Pessoa *</label><select id="emp-pessoa"><option value="">Selecione...</option></select></div><div class="form-group"><label>Data Prevista de Devolução *</label><input type="date" id="emp-data-devolucao"></div></div>
+    <div class="form-group"><label>Livros * <small>(selecione um ou mais)</small></label>
+      <input type="text" id="search-emp-livros" placeholder="Pesquisar por título, autor, editora ou ano..." style="margin-bottom:8px" oninput="filtrarLivrosEmprestimo()">
+      <div id="emp-livros-lista" class="livros-check-list"></div>
+    </div>
+  </div>
+  <div class="modal-footer"><button class="btn-secondary" onclick="fecharModal('modal-emprestimo')">Cancelar</button><button class="btn-primary" onclick="salvarEmprestimo()">Registrar Empréstimo</button></div></div>
+</div>
+
+<div id="modal-devolucao" class="modal-overlay hidden">
+  <div class="modal"><div class="modal-header"><h3>Registrar Devolução</h3><button class="modal-close" onclick="fecharModal('modal-devolucao')">✕</button></div>
+  <div class="modal-body"><p class="modal-hint">Selecione os livros que estão sendo devolvidos:</p><input type="hidden" id="dev-emprestimo-id"><div id="dev-livros-lista" class="livros-check-list"></div></div>
+  <div class="modal-footer"><button class="btn-secondary" onclick="fecharModal('modal-devolucao')">Cancelar</button><button class="btn-primary" onclick="confirmarDevolucao()">Confirmar Devolução</button></div></div>
+</div>
+
+<div id="modal-renovacao" class="modal-overlay hidden">
+  <div class="modal modal-sm"><div class="modal-header"><h3>Renovar Empréstimo</h3><button class="modal-close" onclick="fecharModal('modal-renovacao')">✕</button></div>
+  <div class="modal-body"><input type="hidden" id="renov-emprestimo-id"><p class="modal-hint" id="renov-info"></p><div class="form-group"><label>Nova Data de Devolução *</label><input type="date" id="renov-data"></div></div>
+  <div class="modal-footer"><button class="btn-secondary" onclick="fecharModal('modal-renovacao')">Cancelar</button><button class="btn-primary" onclick="confirmarRenovacao()">Renovar</button></div></div>
+</div>
+
+<div id="modal-funcionario" class="modal-overlay hidden">
+  <div class="modal"><div class="modal-header"><h3 id="modal-func-titulo">Cadastrar Funcionário</h3><button class="modal-close" onclick="fecharModal('modal-funcionario')">✕</button></div>
+  <div class="modal-body"><input type="hidden" id="func-id">
+    <div class="form-row"><div class="form-group"><label>Nome *</label><input type="text" id="func-nome"></div><div class="form-group"><label>Usuário *</label><input type="text" id="func-username" autocomplete="off"></div></div>
+    <div class="form-row"><div class="form-group"><label>Email</label><input type="email" id="func-email"><span id="func-email-erro" class="campo-erro hidden"></span></div><div class="form-group" id="func-perfil-wrap"><label>Perfil</label><select id="func-admin"><option value="0">Funcionário</option><option value="1">Administrador</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label>Senha <small id="func-senha-hint">(obrigatória)</small></label><input type="password" id="func-senha"></div></div>
+  </div>
+  <div class="modal-footer"><button class="btn-secondary" onclick="fecharModal('modal-funcionario')">Cancelar</button><button class="btn-primary" onclick="salvarFuncionario()">Salvar</button></div></div>
+</div>
+
+<div id="modal-atrasados" class="modal-overlay hidden">
+  <div class="modal modal-xl"><div class="modal-header"><h3>⚠️ Empréstimos Atrasados</h3><button class="modal-close" onclick="fecharModal('modal-atrasados')">✕</button></div>
+  <div class="modal-body">
+    <div class="atrasados-toolbar">
+      <input type="text" id="search-atrasados" placeholder="Buscar por nome, data..." oninput="filtrarAtrasados()">
+      <select id="sort-atrasados" onchange="filtrarAtrasados()">
+        <option value="venc-asc">Vencimento: mais antigo</option><option value="venc-desc">Vencimento: mais recente</option>
+        <option value="nome-az">Nome: A → Z</option><option value="emp-asc">Empréstimo: mais antigo</option><option value="emp-desc">Empréstimo: mais recente</option>
+      </select>
+    </div>
+    <div class="table-wrap" style="margin-top:12px"><table class="data-table"><thead><tr><th></th><th>Pessoa</th><th>Emprestado em</th><th>Vencimento</th><th>Atraso</th><th>Livros pendentes</th></tr></thead><tbody id="tbody-atrasados"></tbody></table></div>
+  </div></div>
+</div>
+
+
+
+<!-- MODAL PERGUNTA IMPRESSÃO -->
+<div id="modal-perguntar-impressao" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header"><h3 id="perg-imp-titulo">Comprovante</h3></div>
+    <div class="modal-body">
+      <p id="perg-imp-msg" style="line-height:1.6"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="responderImpressao(false)">Não imprimir</button>
+      <button class="btn-primary" onclick="responderImpressao(true)">🖨️ Ver comprovante</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PREVIEW COMPROVANTE -->
+<div id="modal-comprovante" class="modal-overlay hidden">
+  <div class="modal modal-comprovante">
+    <div class="modal-header">
+      <h3 id="comp-titulo">📄 Comprovante de Empréstimo</h3>
+      <button class="modal-close" onclick="fecharComprovante()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <div class="comp-preview" id="comp-preview"></div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between;align-items:center">
+      <span class="comp-footer-hint">Verifique o comprovante antes de imprimir</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn-secondary" onclick="fecharComprovante()">Fechar</button>
+        <button class="btn-primary" onclick="executarImpressao()">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPROVANTE (área oculta para impressão) -->
+<div id="area-impressao" style="display:none"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
