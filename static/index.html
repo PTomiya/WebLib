@@ -102,7 +102,10 @@
 
     <!-- LIVROS -->
     <section id="sec-livros" class="section">
-      <div class="section-header"><h2>Livros</h2><button class="btn-primary" onclick="limparFormLivro();abrirModal('modal-livro')">+ Novo Livro</button></div>
+      <div class="section-header"><h2>Livros</h2><div style="display:flex;gap:8px;align-items:center">
+        <label class="toggle-inativo-label"><input type="checkbox" id="show-inativos-livros" onchange="carregarLivros()"> Mostrar inativos</label>
+        <button class="btn-primary" onclick="limparFormLivro();abrirModal('modal-livro')">+ Novo Livro</button>
+      </div></div>
       <div class="search-bar"><input type="text" id="search-livros" placeholder="Buscar por título, autor, editora ou ano..." oninput="filtrarLivros()"></div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Título</th><th>Autor</th><th>ISBN</th><th>Editora</th><th>Ano</th><th>Estoque</th><th>Disponível</th><th>Ações</th></tr></thead><tbody id="tbody-livros"></tbody></table></div>
       <div class="pagination-bar" id="pag-livros"></div>
@@ -110,7 +113,10 @@
 
     <!-- PESSOAS -->
     <section id="sec-pessoas" class="section">
-      <div class="section-header"><h2>Pessoas</h2><button class="btn-primary" onclick="limparFormPessoa();abrirModal('modal-pessoa')">+ Nova Pessoa</button></div>
+      <div class="section-header"><h2>Pessoas</h2><div style="display:flex;gap:8px;align-items:center">
+        <label class="toggle-inativo-label"><input type="checkbox" id="show-inativos-pessoas" onchange="carregarPessoas()"> Mostrar inativos</label>
+        <button class="btn-primary" onclick="limparFormPessoa();abrirModal('modal-pessoa')">+ Nova Pessoa</button>
+      </div></div>
       <div class="search-bar"><input type="text" id="search-pessoas" placeholder="Buscar por nome ou documento..." oninput="filtrarPessoas()"></div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Documento</th><th>Ações</th></tr></thead><tbody id="tbody-pessoas"></tbody></table></div>
       <div class="pagination-bar" id="pag-pessoas"></div>
@@ -166,7 +172,10 @@
 
     <!-- FUNCIONÁRIOS -->
     <section id="sec-funcionarios" class="section">
-      <div class="section-header"><h2>Funcionários</h2><button class="btn-primary" id="btn-novo-func" onclick="limparFormFuncionario();abrirModal('modal-funcionario')">+ Novo Funcionário</button></div>
+      <div class="section-header"><h2>Funcionários</h2><div style="display:flex;gap:8px;align-items:center">
+        <label class="toggle-inativo-label"><input type="checkbox" id="show-inativos-funcionarios" onchange="carregarFuncionarios()"> Mostrar inativos</label>
+        <button class="btn-primary" id="btn-novo-func" onclick="limparFormFuncionario();abrirModal('modal-funcionario')">+ Novo Funcionário</button>
+      </div></div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Nome</th><th>Usuário</th><th>Email</th><th>Perfil</th><th>Cadastrado em</th><th>Ações</th></tr></thead><tbody id="tbody-funcionarios"></tbody></table></div>
       <div class="pagination-bar" id="pag-funcionarios"></div>
     </section>
@@ -202,6 +211,16 @@
           </div>
         </div>
         <div class="config-card">
+          <h3>✅ Campos Obrigatórios — Pessoa</h3>
+          <p class="config-desc">Defina quais campos serão obrigatórios ao cadastrar ou editar uma pessoa.</p>
+          <div class="cfg-checks">
+            <label class="cfg-check-item"><input type="checkbox" id="cfg-obrig-email" onchange="marcarConfigAlterada()"><span>Email</span></label>
+            <label class="cfg-check-item"><input type="checkbox" id="cfg-obrig-telefone" onchange="marcarConfigAlterada()"><span>Telefone</span></label>
+            <label class="cfg-check-item"><input type="checkbox" id="cfg-obrig-documento" onchange="marcarConfigAlterada()"><span>Documento (CPF/RG)</span></label>
+            <label class="cfg-check-item"><input type="checkbox" id="cfg-obrig-endereco" onchange="marcarConfigAlterada()"><span>Endereço</span></label>
+          </div>
+        </div>
+        <div class="config-card">
           <h3>🖨️ Modelo de Impressão</h3>
           <p class="config-desc">Formato padrão ao imprimir comprovantes de empréstimo.</p>
           <div class="form-group">
@@ -212,17 +231,7 @@
             </select>
           </div>
         </div>
-        <div class="config-card">
-          <h3>📋 Reimprimir Comprovante</h3>
-          <p class="config-desc">Selecione um empréstimo ativo para reimprimir o comprovante.</p>
-          <div class="form-group">
-            <label>Empréstimo</label>
-            <select id="cfg-emp-imprimir"><option value="">Selecione...</option></select>
-          </div>
-          <div class="config-card-footer">
-            <button class="btn-secondary" onclick="imprimirComprovanteConfig()">🖨️ Visualizar e Imprimir</button>
-          </div>
-        </div>
+
       </div>
     </section>
 
@@ -348,6 +357,7 @@
   </div>
 </div>
 
+<select id="cfg-emp-imprimir" style="display:none"><option value="">Selecione...</option></select>
 <!-- COMPROVANTE (área oculta para impressão) -->
 <div id="area-impressao" style="display:none"></div>
 

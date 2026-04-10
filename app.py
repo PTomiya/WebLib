@@ -60,6 +60,17 @@ def init_db():
         c.execute("ALTER TABLE emprestimo_livros ADD COLUMN data_devolucao TEXT")
         c.execute("UPDATE emprestimo_livros SET devolvido=1 WHERE emprestimo_id IN (SELECT id FROM emprestimos WHERE status='devolvido')")
 
+    # Migração: coluna inativo em pessoas, livros e funcionarios
+    for tbl, col in [('pessoas','inativo'),('livros','inativo'),('funcionarios','inativo')]:
+        c.execute(f"PRAGMA table_info({tbl})")
+        tc = [r['name'] for r in c.fetchall()]
+        if col not in tc:
+            c.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} INTEGER DEFAULT 0")
+
+    # Configs de campos obrigatórios de pessoa
+    for cfg in ['campo_obrig_email','campo_obrig_telefone','campo_obrig_documento','campo_obrig_endereco']:
+        c.execute("INSERT OR IGNORE INTO configuracoes(chave,valor) VALUES(?,?)", (cfg,'0'))
+
     # tabela de configurações
     c.execute('''CREATE TABLE IF NOT EXISTS configuracoes(chave TEXT PRIMARY KEY,valor TEXT)''')
     c.execute("INSERT OR IGNORE INTO configuracoes(chave,valor) VALUES('dias_emprestimo','14')")
@@ -79,7 +90,10 @@ def login():
     d = request.json; conn = get_db(); c = conn.cursor()
     c.execute("SELECT * FROM funcionarios WHERE username=? AND senha=?", (d['username'], hs(d['senha'])))
     f = c.fetchone(); conn.close()
-    if f: return jsonify({'ok':True,'funcionario':{'id':f['id'],'nome':f['nome'],'username':f['username'],'email':f['email'] or '','admin':f['admin']}})
+    if f:
+        if f['inativo']:
+            return jsonify({'ok':False,'msg':'Usuário inativo. Contate o administrador.'}), 401
+        return jsonify({'ok':True,'funcionario':{'id':f['id'],'nome':f['nome'],'username':f['username'],'email':f['email'] or '','admin':f['admin']}})
     return jsonify({'ok':False,'msg':'Usuário ou senha inválidos'}), 401
 
 # ── DASHBOARD ──
@@ -144,8 +158,23 @@ def historico():
 @app.route('/api/livros')
 def listar_livros():
     conn = get_db(); c = conn.cursor()
-    c.execute('''SELECT l.*,(l.quantidade-COALESCE((SELECT COUNT(*) FROM emprestimo_livros el WHERE el.livro_id=l.id AND el.devolvido=0),0)) as disponivel FROM livros l ORDER BY l.titulo''')
+    incl = request.args.get('inativos','0')
+    cond = "" if incl=='1' else "WHERE l.inativo=0"
+    order = "ORDER BY l.inativo, l.titulo" if incl=='1' else "ORDER BY l.titulo"
+    c.execute(f'''SELECT l.*,(l.quantidade-COALESCE((SELECT COUNT(*) FROM emprestimo_livros el WHERE el.livro_id=l.id AND el.devolvido=0),0)) as disponivel FROM livros l {cond} {order}''')
     r = [dict(x) for x in c.fetchall()]; conn.close(); return jsonify(r)
+
+@app.route('/api/livros/<int:lid>/inativar', methods=['POST'])
+def inativar_livro(lid):
+    conn = get_db(); c = conn.cursor()
+    c.execute("UPDATE livros SET inativo=1 WHERE id=?", (lid,))
+    conn.commit(); conn.close(); return jsonify({'ok':True})
+
+@app.route('/api/livros/<int:lid>/reativar', methods=['POST'])
+def reativar_livro(lid):
+    conn = get_db(); c = conn.cursor()
+    c.execute("UPDATE livros SET inativo=0 WHERE id=?", (lid,))
+    conn.commit(); conn.close(); return jsonify({'ok':True})
 
 @app.route('/api/livros', methods=['POST'])
 def criar_livro():

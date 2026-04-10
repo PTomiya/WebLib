@@ -214,7 +214,11 @@ function renderGrafico(d) {
 
 /* ══ LIVROS ══ */
 async function carregarLivros() {
-  todosLivros=await(await fetch(`${API}/livros`)).json(); renderLivros(todosLivros);
+  var incl = document.getElementById('show-inativos-livros');
+  var url = incl && incl.checked ? `${API}/livros?inativos=1` : `${API}/livros`;
+  todosLivros = await(await fetch(url)).json();
+  _pagAtual.livros = 1;
+  renderLivros(todosLivros);
 }
 function renderLivros(lista) {
   _listaFiltradaLivros = lista;
@@ -222,13 +226,17 @@ function renderLivros(lista) {
   if (!lista.length){tbody.innerHTML='<tr><td colspan="8" class="empty-state">Nenhum livro cadastrado</td></tr>';renderPaginacao('pag-livros','livros',1,1,0,0,0);return;}
   const {itens,pag,totalPags,total,inicio,fim} = paginar(lista, _pagAtual.livros);
   tbody.innerHTML=itens.map(l=>`
-    <tr><td><strong>${l.titulo}</strong></td><td>${l.autor}</td><td>${l.isbn||'–'}</td>
-    <td>${l.editora||'–'}</td><td>${l.ano||'–'}</td><td>${l.quantidade}</td>
-    <td><span class="badge ${l.disponivel>0?'badge-green':'badge-red'}">${l.disponivel}</span></td>
-    <td><div class="tbl-actions">
-      <button class="btn-icon" onclick="editarLivro(${l.id})">✏️ Editar</button>
-      <button class="btn-icon danger" onclick="deletarLivro(${l.id})">🗑️</button>
-    </div></td></tr>`).join('');
+    <tr class="${l.inativo?'row-inativo':''}">
+      <td><strong>${l.titulo}</strong>${l.inativo?' <span class="badge badge-inativo">Inativo</span>':''}</td>
+      <td>${l.autor}</td><td>${l.isbn||'–'}</td>
+      <td>${l.editora||'–'}</td><td>${l.ano||'–'}</td><td>${l.quantidade}</td>
+      <td><span class="badge ${l.disponivel>0?'badge-green':'badge-red'}">${l.inativo?'–':l.disponivel}</span></td>
+      <td><div class="tbl-actions">
+        ${!l.inativo?`<button class="btn-icon" onclick="editarLivro(${l.id})">✏️ Editar</button>`:''}
+        ${!l.inativo?`<button class="btn-icon danger" onclick="inativarRegistro('livros',${l.id})">⛔ Inativar</button>`
+                    :`<button class="btn-icon" onclick="reativarRegistro('livros',${l.id})">✅ Reativar</button>`}
+      </div></td>
+    </tr>`).join('');
   renderPaginacao('pag-livros','livros',pag,totalPags,total,inicio,fim);
 }
 function filtrarLivros() {
@@ -278,7 +286,11 @@ async function deletarLivro(id) {
 
 /* ══ PESSOAS ══ */
 async function carregarPessoas() {
-  todasPessoas=await(await fetch(`${API}/pessoas`)).json(); renderPessoas(todasPessoas);
+  var incl = document.getElementById('show-inativos-pessoas');
+  var url = incl && incl.checked ? `${API}/pessoas?inativos=1` : `${API}/pessoas`;
+  todasPessoas = await(await fetch(url)).json();
+  _pagAtual.pessoas = 1;
+  renderPessoas(todasPessoas);
 }
 function renderPessoas(lista) {
   _listaFiltradaPessoas = lista;
@@ -326,8 +338,16 @@ async function salvarPessoa() {
     documento:document.getElementById('pessoa-documento').value.trim(),
     endereco:document.getElementById('pessoa-endereco').value.trim()};
   if(!p.nome){toast('Preencha o nome.','error');return;}
-  await fetch(id?`${API}/pessoas/${id}`:`${API}/pessoas`,{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
-  fecharModal('modal-pessoa');toast(id?'Pessoa atualizada!':'Pessoa cadastrada!');carregarPessoas();carregarDashboard();
+  // Validar campos obrigatórios configurados
+  const obrigCfg = _configOriginal.campos_obrig || {};
+  if(obrigCfg.email && !p.email){ toast('Email é obrigatório (configurado em Configurações).','error'); return; }
+  if(obrigCfg.telefone && !p.telefone){ toast('Telefone é obrigatório (configurado em Configurações).','error'); return; }
+  if(obrigCfg.documento && !p.documento){ toast('Documento é obrigatório (configurado em Configurações).','error'); return; }
+  if(obrigCfg.endereco && !p.endereco){ toast('Endereço é obrigatório (configurado em Configurações).','error'); return; }
+  const r = await fetch(id?`${API}/pessoas/${id}`:`${API}/pessoas`,{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+  const d = await r.json();
+  if(d.ok){fecharModal('modal-pessoa');toast(id?'Pessoa atualizada!':'Pessoa cadastrada!');carregarPessoas();carregarDashboard();}
+  else toast(d.msg||'Erro ao salvar.','error');
 }
 async function deletarPessoa(id) {
   if(!await confirmar('Excluir pessoa','Deseja excluir este cadastro?','Excluir'))return;
@@ -386,12 +406,14 @@ function renderEmprestimos(lista) {
       return `<div class="livro-row-pendente">📕 ${l.titulo}</div>`;
     }).join('');
     const nenhum_devolvido=!e.livros.some(l=>l.devolvido);
+    const btnImprimir = `<button class="btn-icon" onclick="reimprimirComprovante(${e.id})" title="Imprimir comprovante">🖨️</button>`;
     const btns=e.status==='ativo'&&pendentes.length>0?`
       <button class="btn-devolver" onclick="abrirDevolucao(${e.id})">↩ Devolver</button>
       <button class="btn-renovar" onclick="abrirRenovacao(${e.id})">🔄 Renovar</button>
+      ${btnImprimir}
       ${nenhum_devolvido?`<button class="btn-icon danger" onclick="excluirEmprestimo(${e.id})">🗑️</button>`:''}`:
-      e.status==='ativo'?'':
-      `${nenhum_devolvido?`<button class="btn-icon danger" onclick="excluirEmprestimo(${e.id})">🗑️</button>`:''}`;
+      e.status==='ativo'?btnImprimir:
+      `${btnImprimir}${nenhum_devolvido?`<button class="btn-icon danger" onclick="excluirEmprestimo(${e.id})">🗑️</button>`:''}`;
     return `<tr><td><strong>${e.pessoa_nome}</strong></td><td style="max-width:200px">${livrosHtml}</td>
       <td>${e.funcionario_nome}</td><td>${fmtData(e.data_emprestimo)}</td>
       <td>${fmtData(e.data_prevista_devolucao)}</td><td>${badge}</td>
@@ -611,7 +633,9 @@ function toggleDetalhe(btn, eid) {
 
 /* ══ FUNCIONÁRIOS ══ */
 async function carregarFuncionarios() {
-  const funcs=await(await fetch(`${API}/funcionarios`)).json();
+  var incl = document.getElementById('show-inativos-funcionarios');
+  var url = incl && incl.checked ? `${API}/funcionarios?inativos=1` : `${API}/funcionarios`;
+  const funcs=await(await fetch(url)).json();
   const tbody=document.getElementById('tbody-funcionarios');
   // Não-admin só vê a si mesmo
   const lista=sessao.admin?funcs:funcs.filter(f=>f.id===sessao.id);
@@ -626,17 +650,20 @@ function _renderFuncionariosLista(lista) {
   const {itens,pag,totalPags,total,inicio,fim} = paginar(lista, _pagAtual.funcionarios);
   tbody.innerHTML=itens.map(f=>{
     const ehVoce=f.id===sessao.id;
-    const podeEditar=sessao.admin||ehVoce;
-    const podeExcluir=sessao.admin&&!ehVoce;
-    return `<tr>
-      <td><strong>${f.nome}</strong></td><td><span style="color:var(--text2)">@</span>${f.username}</td>
+    const podeEditar=(sessao.admin||ehVoce)&&!f.inativo;
+    const podeInativar=sessao.admin&&!ehVoce&&!f.inativo;
+    const podeReativar=sessao.admin&&f.inativo;
+    return `<tr class="${f.inativo?'row-inativo':''}">
+      <td><strong>${f.nome}</strong>${f.inativo?' <span class="badge badge-inativo">Inativo</span>':''}</td>
+      <td><span style="color:var(--text2)">@</span>${f.username}</td>
       <td>${f.email||'–'}</td>
       <td><span class="badge ${f.admin?'badge-amber':'badge-blue'}">${f.admin?'Admin':'Funcionário'}</span>${ehVoce?' <span style="color:var(--text3);font-size:.7rem">(você)</span>':''}</td>
       <td>${fmtData(f.criado_em?.split(' ')[0])}</td>
       <td><div class="tbl-actions">
         ${podeEditar?`<button class="btn-icon" onclick="editarFuncionario(${f.id},'${f.nome}','${f.username}','${f.email||''}',${f.admin})">✏️ Editar</button>`:''}
-        ${podeExcluir?`<button class="btn-icon danger" onclick="deletarFuncionario(${f.id})">🗑️</button>`:''}
-        ${!podeEditar&&!podeExcluir?'<span style="color:var(--text3);font-size:.78rem">–</span>':''}
+        ${podeInativar?`<button class="btn-icon danger" onclick="inativarRegistro('funcionarios',${f.id})">⛔ Inativar</button>`:''}
+        ${podeReativar?`<button class="btn-icon" onclick="reativarRegistro('funcionarios',${f.id})">✅ Reativar</button>`:''}
+        ${!podeEditar&&!podeInativar&&!podeReativar&&!ehVoce?'<span style="color:var(--text3);font-size:.78rem">–</span>':''}
       </div></td></tr>`;
   }).join('');
   renderPaginacao('pag-funcionarios','funcionarios',pag,totalPags,total,inicio,fim);
@@ -701,7 +728,17 @@ async function carregarConfig() {
     if (modeloEl) modeloEl.value = cfg.modelo_impressao || 'a4';
     const pagEl = document.getElementById('cfg-paginacao');
     if (pagEl) pagEl.value = String(itensPorPagina);
-    _configOriginal = { dias: diasPadraoEmp, modelo: cfg.modelo_impressao || 'a4', paginacao: itensPorPagina };
+    const obrig = {
+      email: cfg.campo_obrig_email === '1',
+      telefone: cfg.campo_obrig_telefone === '1',
+      documento: cfg.campo_obrig_documento === '1',
+      endereco: cfg.campo_obrig_endereco === '1'
+    };
+    ['email','telefone','documento','endereco'].forEach(function(f) {
+      var el = document.getElementById('cfg-obrig-' + f);
+      if (el) el.checked = obrig[f];
+    });
+    _configOriginal = { dias: diasPadraoEmp, modelo: cfg.modelo_impressao || 'a4', paginacao: itensPorPagina, campos_obrig: obrig };
     // Preencher select de empréstimos ativos para reimprimir
     const ativos = (todosEmprestimos.length ? todosEmprestimos : await(await fetch(`${API}/emprestimos`)).json()).filter(e=>e.status==='ativo');
     const sel = document.getElementById('cfg-emp-imprimir');
@@ -720,7 +757,15 @@ function atualizarBtnSalvarConfig() {
   const diasAtual = parseInt(document.getElementById('cfg-dias')?.value)||14;
   const modeloAtual = document.getElementById('cfg-modelo')?.value || 'a4';
   const pagAtual = parseInt(document.getElementById('cfg-paginacao')?.value)||10;
-  const alterado = diasAtual !== _configOriginal.dias || modeloAtual !== _configOriginal.modelo || pagAtual !== _configOriginal.paginacao;
+  const obrigAtual = {
+    email: !!(document.getElementById('cfg-obrig-email')?.checked),
+    telefone: !!(document.getElementById('cfg-obrig-telefone')?.checked),
+    documento: !!(document.getElementById('cfg-obrig-documento')?.checked),
+    endereco: !!(document.getElementById('cfg-obrig-endereco')?.checked)
+  };
+  const obrigOrig = _configOriginal.campos_obrig || {};
+  const obrigAlterado = ['email','telefone','documento','endereco'].some(function(f){ return obrigAtual[f] !== (obrigOrig[f]||false); });
+  const alterado = diasAtual !== _configOriginal.dias || modeloAtual !== _configOriginal.modelo || pagAtual !== _configOriginal.paginacao || obrigAlterado;
   btn.disabled = !alterado;
   btn.style.opacity = alterado ? '1' : '0.35';
 }
@@ -729,13 +774,24 @@ async function salvarConfig() {
   const dias = parseInt(document.getElementById('cfg-dias').value)||14;
   const modelo = document.getElementById('cfg-modelo')?.value || 'a4';
   const paginacao = parseInt(document.getElementById('cfg-paginacao')?.value)||10;
-  const r = await fetch(`${API}/configuracoes`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dias_emprestimo:dias, modelo_impressao:modelo, paginacao:paginacao})});
+  const obrigSalvar = {
+    campo_obrig_email: document.getElementById('cfg-obrig-email')?.checked ? '1' : '0',
+    campo_obrig_telefone: document.getElementById('cfg-obrig-telefone')?.checked ? '1' : '0',
+    campo_obrig_documento: document.getElementById('cfg-obrig-documento')?.checked ? '1' : '0',
+    campo_obrig_endereco: document.getElementById('cfg-obrig-endereco')?.checked ? '1' : '0'
+  };
+  const r = await fetch(`${API}/configuracoes`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({dias_emprestimo:dias, modelo_impressao:modelo, paginacao:paginacao}, obrigSalvar))});
   const d = await r.json();
   if (d.ok) {
     diasPadraoEmp = dias;
     itensPorPagina = paginacao;
     localStorage.setItem('bsys_modelo', modelo);
-    _configOriginal = { dias, modelo, paginacao };
+    _configOriginal = { dias, modelo, paginacao, campos_obrig: {
+      email: obrigSalvar.campo_obrig_email==='1',
+      telefone: obrigSalvar.campo_obrig_telefone==='1',
+      documento: obrigSalvar.campo_obrig_documento==='1',
+      endereco: obrigSalvar.campo_obrig_endereco==='1'
+    }};
     const btn = document.getElementById('btn-salvar-config');
     if (btn) { btn.disabled = true; btn.style.opacity = '0.35'; }
     toast('Configurações salvas!');
@@ -747,6 +803,32 @@ function imprimirComprovanteConfig() {
   if (!eid) { toast('Selecione um empréstimo.','error'); return; }
   const modelo = document.getElementById('cfg-modelo')?.value || 'a4';
   reimprimirComprovante(eid, modelo);
+}
+
+
+/* ══ INATIVAR / REATIVAR ══ */
+async function inativarRegistro(tipo, id) {
+  const nomes = {livros:'este livro', pessoas:'esta pessoa', funcionarios:'este funcionário'};
+  if (!await confirmar('Inativar', 'Deseja inativar ' + (nomes[tipo]||'este registro') + '? Ele não aparecerá mais nas listagens padrão.', 'Inativar')) return;
+  const r = await fetch(`${API}/${tipo}/${id}/inativar`, {method:'POST'});
+  const d = await r.json();
+  if (d.ok) {
+    toast('Registro inativado.', 'info');
+    if (tipo==='livros') carregarLivros();
+    else if (tipo==='pessoas') carregarPessoas();
+    else if (tipo==='funcionarios') carregarFuncionarios();
+  } else toast(d.msg || 'Erro ao inativar.', 'error');
+}
+
+async function reativarRegistro(tipo, id) {
+  const r = await fetch(`${API}/${tipo}/${id}/reativar`, {method:'POST'});
+  const d = await r.json();
+  if (d.ok) {
+    toast('Registro reativado!');
+    if (tipo==='livros') carregarLivros();
+    else if (tipo==='pessoas') carregarPessoas();
+    else if (tipo==='funcionarios') carregarFuncionarios();
+  } else toast(d.msg || 'Erro ao reativar.', 'error');
 }
 
 /* ══ COMPROVANTE ══ */

@@ -436,3 +436,17 @@ body{font-family:'Open Sans',system-ui,sans-serif;background:var(--bg);color:var
 .pag-btn:disabled { opacity: .35; cursor: default; }
 [data-theme="dark"] .pag-btn.active { color: #000; }
 [data-theme="light"] .pag-btn.active { color: #fff; }
+
+/* ══ CONFIG CHECKS ══ */
+.cfg-checks { display: flex; flex-direction: column; gap: 8px; }
+.cfg-check-item { display: flex; align-items: center; gap: 8px; font-size: .875rem; cursor: pointer; padding: 4px 0; }
+.cfg-check-item input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+
+/* ══ TOGGLE INATIVO ══ */
+.toggle-inativo-label { display: flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--text2); cursor: pointer; white-space: nowrap; }
+.toggle-inativo-label input { accent-color: var(--accent); cursor: pointer; }
+
+/* ══ LINHA INATIVA ══ */
+.row-inativo td { opacity: .45; }
+.row-inativo td:last-child { opacity: 1; }
+.badge-inativo { background: rgba(128,128,128,.12); color: var(--text3); }
