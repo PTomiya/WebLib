@@ -361,6 +361,16 @@ def deletar_funcionario(fid):
     conn = get_db(); c = conn.cursor()
     c.execute("DELETE FROM funcionarios WHERE id=?", (fid,)); conn.commit(); conn.close(); return jsonify({'ok':True})
 
+@app.route('/api/verificar-sessao', methods=['POST'])
+def verificar_sessao():
+    d = request.json
+    conn = get_db(); c = conn.cursor()
+    c.execute("SELECT COALESCE(inativo,0) as inativo FROM funcionarios WHERE id=?", (d.get('id'),))
+    f = c.fetchone(); conn.close()
+    if not f: return jsonify({'ok': False}), 404
+    if f['inativo']: return jsonify({'ok': False, 'inativo': True}), 401
+    return jsonify({'ok': True})
+
 @app.route('/')
 def index(): return send_from_directory('static','index.html')
 @app.route('/<path:path>')

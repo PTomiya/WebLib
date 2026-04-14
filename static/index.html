@@ -128,11 +128,11 @@
       <div class="emp-toolbar">
         <input type="text" id="search-emp" placeholder="Nome da pessoa ou livro..." oninput="aplicarFiltrosEmp()">
         <div class="filter-date-group">
-          <label class="filter-date-label">Data do empréstimo</label>
+          <label class="filter-date-label">Data do empréstimo <button class="btn-clear-date" onclick="limparData('filter-emp-data-emp')" title="Limpar">✕</button></label>
           <input type="date" id="filter-emp-data-emp" onchange="aplicarFiltrosEmp()">
         </div>
         <div class="filter-date-group">
-          <label class="filter-date-label">Previsão de devolução</label>
+          <label class="filter-date-label">Previsão de devolução <button class="btn-clear-date" onclick="limparData('filter-emp-data-dev')" title="Limpar">✕</button></label>
           <input type="date" id="filter-emp-data-dev" onchange="aplicarFiltrosEmp()">
         </div>
         <select id="filter-emp-status" onchange="aplicarFiltrosEmp()">
@@ -158,11 +158,11 @@
       <div class="emp-toolbar">
         <input type="text" id="search-hist" placeholder="Pessoa ou livro..." oninput="filtrarHistorico()">
         <div class="filter-date-group">
-          <label class="filter-date-label">Data do empréstimo</label>
+          <label class="filter-date-label">Data do empréstimo <button class="btn-clear-date" onclick="limparData('hist-data-emp')" title="Limpar">✕</button></label>
           <input type="date" id="hist-data-emp" onchange="filtrarHistorico()">
         </div>
         <div class="filter-date-group">
-          <label class="filter-date-label">Data de devolução</label>
+          <label class="filter-date-label">Data de devolução <button class="btn-clear-date" onclick="limparData('hist-data-dev')" title="Limpar">✕</button></label>
           <input type="date" id="hist-data-dev" onchange="filtrarHistorico()">
         </div>
       </div>

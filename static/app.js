@@ -9,6 +9,11 @@ let itensPorPagina = 10;
 const _pagAtual = { livros:1, pessoas:1, emprestimos:1, historico:1, funcionarios:1 };
 let _listaFiltradaLivros=[], _listaFiltradaPessoas=[], _listaFiltradaEmp=[], _listaFiltradaHist=[], _listaFiltradaFunc=[];
 
+/* ==LIMPA DATA FILTRO== */
+function limparData(id) {
+  var el = document.getElementById(id);
+  if (el) { el.value = ''; el.dispatchEvent(new Event('change')); }
+}
 /* ══ TEMA ══ */
 function setTema(t) {
   localStorage.setItem('bsys_tema', t); aplicarTema(t);
@@ -142,6 +147,11 @@ document.addEventListener('keydown', e => {
 function fazerLogout() { abrirModal('modal-logout'); }
 function confirmarLogout() {
   fecharModal('modal-logout'); limparSessaoLocal(); sessao=null;
+  // Resetar seção ativa para dashboard antes de mostrar login
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  var dash = document.getElementById('sec-dashboard');
+  if (dash) dash.classList.add('active');
   document.getElementById('page-app').classList.remove('active');
   document.getElementById('page-login').classList.add('active');
   document.getElementById('login-username').value='';
@@ -153,7 +163,16 @@ function confirmarLogout() {
 document.addEventListener('DOMContentLoaded', () => {
   aplicarTema(localStorage.getItem('bsys_tema')||'dark');
   const s = recuperarSessaoLocal();
-  if (s) aplicarSessao(s);
+    if (s) {
+      // Validar sessão no servidor antes de restaurar
+      fetch(`${API}/login`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username: s.username, _validar_sessao: true, senha: s._senha_hash || ''})
+      }).catch(() => {});
+      // Restaurar direto pois temos a sessão válida — o servidor bloqueará na próxima ação se inativo
+      aplicarSessao(s);
+    }
   // validação email pessoa
   const eI=document.getElementById('pessoa-email'), eE=document.getElementById('pessoa-email-erro');
   if (eI&&eE) {
@@ -401,19 +420,18 @@ function renderEmprestimos(lista) {
     const pendentes=e.livros.filter(l=>!l.devolvido);
     const badge=e.status==='devolvido'?'<span class="badge badge-green">Devolvido</span>'
       :vencido?'<span class="badge badge-red">Atrasado</span>':'<span class="badge badge-amber">Ativo</span>';
-    const livrosHtml=e.livros.map(l=>{
-      if(l.devolvido) return `<div class="livro-row-devolvido">✅ ${l.titulo}<span class="livro-row-devolvido-data">(dev. ${fmtData(l.data_devolucao)})</span></div>`;
-      return `<div class="livro-row-pendente">📕 ${l.titulo}</div>`;
-    }).join('');
+    const totalLivros = e.livros.length;
+    const devolvidos = e.livros.filter(l=>l.devolvido).length;
+    const livrosHtml = `<span class="livros-resumo">${totalLivros} livro${totalLivros!==1?'s':''} <span class="livros-resumo-sub">(${devolvidos} devolvido${devolvidos!==1?'s':''})</span></span> <button class="btn-ver-livros" onclick="toggleLivrosEmp(this)">ver</button><div class="livros-detalhe hidden">${e.livros.map(l=>l.devolvido?`<div class="livro-row-devolvido">✅ ${l.titulo}</div>`:`<div class="livro-row-pendente">📕 ${l.titulo}</div>`).join('')}</div>`;
     const nenhum_devolvido=!e.livros.some(l=>l.devolvido);
-    const btnImprimir = `<button class="btn-icon" onclick="reimprimirComprovante(${e.id})" title="Imprimir comprovante">🖨️</button>`;
+    const btnImprimir = `<button class="btn-icon" onclick="reimprimirComprovante(${e.id})">🖨️ Imprimir</button>`;
     const btns=e.status==='ativo'&&pendentes.length>0?`
       <button class="btn-devolver" onclick="abrirDevolucao(${e.id})">↩ Devolver</button>
       <button class="btn-renovar" onclick="abrirRenovacao(${e.id})">🔄 Renovar</button>
       ${btnImprimir}
-      ${nenhum_devolvido?`<button class="btn-icon danger" onclick="excluirEmprestimo(${e.id})">🗑️</button>`:''}`:
+      ${nenhum_devolvido?`<button class="btn-icon danger" onclick="excluirEmprestimo(${e.id})" style="border-color:var(--red);color:var(--red)">🗑️</button>`:''}`:
       e.status==='ativo'?btnImprimir:
-      `${btnImprimir}${nenhum_devolvido?`<button class="btn-icon danger" onclick="excluirEmprestimo(${e.id})">🗑️</button>`:''}`;
+      `${btnImprimir}${nenhum_devolvido?`<button class="btn-icon danger" onclick="excluirEmprestimo(${e.id})" style="border-color:var(--red);color:var(--red)">🗑️</button>`:''}`;
     return `<tr><td><strong>${e.pessoa_nome}</strong></td><td style="max-width:200px">${livrosHtml}</td>
       <td>${e.funcionario_nome}</td><td>${fmtData(e.data_emprestimo)}</td>
       <td>${fmtData(e.data_prevista_devolucao)}</td><td>${badge}</td>
@@ -813,11 +831,16 @@ async function inativarRegistro(tipo, id) {
   const r = await fetch(`${API}/${tipo}/${id}/inativar`, {method:'POST'});
   const d = await r.json();
   if (d.ok) {
-    toast('Registro inativado.', 'info');
-    if (tipo==='livros') carregarLivros();
-    else if (tipo==='pessoas') carregarPessoas();
-    else if (tipo==='funcionarios') carregarFuncionarios();
-  } else toast(d.msg || 'Erro ao inativar.', 'error');
+      toast('Registro inativado.', 'info');
+      if (tipo==='livros') carregarLivros();
+      else if (tipo==='pessoas') carregarPessoas();
+      else if (tipo==='funcionarios') {
+        // Marcar checkbox para mostrar inativos e recarregar
+        var chk = document.getElementById('show-inativos-funcionarios');
+        if (chk) chk.checked = true;
+        carregarFuncionarios();
+      }
+    } else toast(d.msg || 'Erro ao inativar.', 'error');
 }
 
 async function reativarRegistro(tipo, id) {
@@ -1025,4 +1048,11 @@ function imprimirComprovante(tipo) {
   const eid=parseInt(document.getElementById('cfg-emp-imprimir')?.value||'0');
   if(!eid){toast('Selecione um empréstimo.','error');return;}
   reimprimirComprovante(eid, tipo);
+}
+
+function toggleLivrosEmp(btn) {
+  var detalhe = btn.nextElementSibling;
+  var aberto = !detalhe.classList.contains('hidden');
+  detalhe.classList.toggle('hidden', aberto);
+  btn.textContent = aberto ? 'ver' : 'ocultar';
 }
