@@ -203,7 +203,12 @@ def deletar_livro(lid):
 # ── PESSOAS ──
 @app.route('/api/pessoas')
 def listar_pessoas():
-    conn = get_db(); c = conn.cursor(); c.execute("SELECT * FROM pessoas ORDER BY nome")
+    conn = get_db(); c = conn.cursor()
+    incl = request.args.get('inativos','0')
+    if incl == '1':
+        c.execute("SELECT * FROM pessoas ORDER BY COALESCE(inativo,0), nome")
+    else:
+        c.execute("SELECT * FROM pessoas WHERE COALESCE(inativo,0)=0 ORDER BY nome")
     r = [dict(x) for x in c.fetchall()]; conn.close(); return jsonify(r)
 
 @app.route('/api/pessoas', methods=['POST'])
@@ -226,6 +231,18 @@ def deletar_pessoa(pid):
     c.execute("SELECT COUNT(*) as t FROM emprestimos WHERE pessoa_id=?", (pid,))
     if c.fetchone()['t']>0: conn.close(); return jsonify({'ok':False,'msg':'Pessoa possui empréstimos e não pode ser excluída.'}), 400
     c.execute("DELETE FROM pessoas WHERE id=?", (pid,)); conn.commit(); conn.close(); return jsonify({'ok':True})
+
+@app.route('/api/pessoas/<int:pid>/inativar', methods=['POST'])
+def inativar_pessoa(pid):
+    conn = get_db(); c = conn.cursor()
+    c.execute("UPDATE pessoas SET inativo=1 WHERE id=?", (pid,))
+    conn.commit(); conn.close(); return jsonify({'ok':True})
+
+@app.route('/api/pessoas/<int:pid>/reativar', methods=['POST'])
+def reativar_pessoa(pid):
+    conn = get_db(); c = conn.cursor()
+    c.execute("UPDATE pessoas SET inativo=0 WHERE id=?", (pid,))
+    conn.commit(); conn.close(); return jsonify({'ok':True})
 
 # ── EMPRÉSTIMOS ──
 @app.route('/api/emprestimos')
@@ -312,7 +329,11 @@ def renovar_emprestimo(eid):
 @app.route('/api/funcionarios')
 def listar_funcionarios():
     conn = get_db(); c = conn.cursor()
-    c.execute("SELECT id,nome,username,email,admin,criado_em FROM funcionarios ORDER BY nome")
+    incl = request.args.get('inativos','0')
+    if incl == '1':
+        c.execute("SELECT id,nome,username,email,admin,COALESCE(inativo,0) as inativo,criado_em FROM funcionarios ORDER BY inativo, nome")
+    else:
+        c.execute("SELECT id,nome,username,email,admin,COALESCE(inativo,0) as inativo,criado_em FROM funcionarios WHERE COALESCE(inativo,0)=0 ORDER BY nome")
     r = [dict(x) for x in c.fetchall()]; conn.close(); return jsonify(r)
 
 @app.route('/api/funcionarios', methods=['POST'])
@@ -360,6 +381,18 @@ def editar_funcionario(fid):
 def deletar_funcionario(fid):
     conn = get_db(); c = conn.cursor()
     c.execute("DELETE FROM funcionarios WHERE id=?", (fid,)); conn.commit(); conn.close(); return jsonify({'ok':True})
+
+@app.route('/api/funcionarios/<int:fid>/inativar', methods=['POST'])
+def inativar_funcionario(fid):
+    conn = get_db(); c = conn.cursor()
+    c.execute("UPDATE funcionarios SET inativo=1 WHERE id=?", (fid,))
+    conn.commit(); conn.close(); return jsonify({'ok':True})
+
+@app.route('/api/funcionarios/<int:fid>/reativar', methods=['POST'])
+def reativar_funcionario(fid):
+    conn = get_db(); c = conn.cursor()
+    c.execute("UPDATE funcionarios SET inativo=0 WHERE id=?", (fid,))
+    conn.commit(); conn.close(); return jsonify({'ok':True})
 
 @app.route('/api/verificar-sessao', methods=['POST'])
 def verificar_sessao():
