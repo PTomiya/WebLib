@@ -14,39 +14,6 @@ function limparData(id) {
   var el = document.getElementById(id);
   if (el) { el.value = ''; el.dispatchEvent(new Event('change')); }
 }
-
-function toggleFiltrosAvancados() {
-  var painel = document.getElementById('filtros-avancados');
-  var btn = document.getElementById('btn-filtros-avancados');
-  if (!painel) return;
-  var aberto = !painel.classList.contains('hidden');
-  painel.classList.toggle('hidden', aberto);
-  if (btn) btn.classList.toggle('ativo', !aberto);
-}
-
-function atualizarBadgeFiltros() {
-  var badge = document.getElementById('filtros-badge');
-  if (!badge) return;
-  var dataEmp = document.getElementById('filter-emp-data-emp')?.value;
-  var dataDev = document.getElementById('filter-emp-data-dev')?.value;
-  var status = document.getElementById('filter-emp-status')?.value;
-  var ativo = dataEmp || dataDev || (status && status !== 'todos');
-  badge.classList.toggle('hidden', !ativo);
-  var btn = document.getElementById('btn-filtros-avancados');
-  if (btn) btn.classList.toggle('ativo', !!ativo);
-}
-
-function limparFiltrosAvancados() {
-  var campos = ['filter-emp-data-emp','filter-emp-data-dev'];
-  campos.forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  var status = document.getElementById('filter-emp-status');
-  if (status) status.value = 'todos';
-  atualizarBadgeFiltros();
-  aplicarFiltrosEmp();
-}
 /* ══ TEMA ══ */
 function setTema(t) {
   localStorage.setItem('bsys_tema', t); aplicarTema(t);
@@ -221,8 +188,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function showSection(nome) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById(`sec-${nome}`).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>{ if(n.getAttribute('onclick')?.includes(`'${nome}'`)) n.classList.add('active'); });
+  // Mobile nav sync
+  document.querySelectorAll('.mobile-nav a').forEach(n=>n.classList.remove('active'));
+  var sec = document.getElementById('sec-'+nome);
+  if (sec) sec.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{ if(n.getAttribute('onclick')?.includes("'"+nome+"'")) n.classList.add('active'); });
+  document.querySelectorAll('.mobile-nav a').forEach(n=>{ if(n.getAttribute('onclick')?.includes("'"+nome+"'")) n.classList.add('active'); });
   ({dashboard:carregarDashboard,livros:carregarLivros,pessoas:carregarPessoas,
     emprestimos:carregarEmprestimos,historico:carregarHistorico,
     funcionarios:carregarFuncionarios,config:carregarConfig})[nome]?.();
@@ -868,9 +839,10 @@ async function inativarRegistro(tipo, id) {
       if (tipo==='livros') carregarLivros();
       else if (tipo==='pessoas') carregarPessoas();
       else if (tipo==='funcionarios') {
+        // Marcar checkbox para mostrar inativos e recarregar
         var chk = document.getElementById('show-inativos-funcionarios');
         if (chk) chk.checked = true;
-        await carregarFuncionarios();
+        carregarFuncionarios();
       }
     } else toast(d.msg || 'Erro ao inativar.', 'error');
 }
@@ -880,9 +852,9 @@ async function reativarRegistro(tipo, id) {
   const d = await r.json();
   if (d.ok) {
     toast('Registro reativado!');
-    if (tipo==='livros') { var c=document.getElementById('show-inativos-livros'); if(c)c.checked=true; await carregarLivros(); }
-    else if (tipo==='pessoas') { var c=document.getElementById('show-inativos-pessoas'); if(c)c.checked=true; await carregarPessoas(); }
-    else if (tipo==='funcionarios') { var c=document.getElementById('show-inativos-funcionarios'); if(c)c.checked=true; await carregarFuncionarios(); }
+    if (tipo==='livros') carregarLivros();
+    else if (tipo==='pessoas') carregarPessoas();
+    else if (tipo==='funcionarios') carregarFuncionarios();
   } else toast(d.msg || 'Erro ao reativar.', 'error');
 }
 

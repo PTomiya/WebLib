@@ -24,14 +24,22 @@
 
 <!-- APP -->
 <div id="page-app" class="page">
-  <!-- Mobile topbar -->
+  <!-- Mobile topbar (visível em ≤ 767px) -->
   <div class="mobile-topbar" id="mobile-topbar">
     <span class="mobile-logo">📚 BiblioSys</span>
-    <div class="mobile-actions">
-      <button onclick="showSection('livros')">📕 Livros</button>
-      <button onclick="showSection('pessoas')">👤 Pessoas</button>
-      <button onclick="showSection('emprestimos')">🔖 Empréstimos</button>
-      <button onclick="showSection('historico')">📋 Histórico</button>
+    <nav class="mobile-nav" id="mobile-nav">
+      <a href="#" onclick="showSection('dashboard')">Dashboard</a>
+      <a href="#" onclick="showSection('livros')">Livros</a>
+      <a href="#" onclick="showSection('pessoas')">Pessoas</a>
+      <a href="#" onclick="showSection('emprestimos')">Empréstimos</a>
+      <a href="#" onclick="showSection('historico')">Histórico</a>
+      <a href="#" id="mob-nav-func" onclick="showSection('funcionarios')">Funcionários</a>
+      <a href="#" id="mob-nav-config" onclick="showSection('config')">Config.</a>
+    </nav>
+    <div class="mobile-user">
+      <div class="user-avatar" id="mob-user-avatar">A</div>
+      <div class="user-info"><span id="mob-user-nome">Admin</span><small id="mob-user-email">@admin</small></div>
+      <button class="btn-sair" onclick="fazerLogout()" style="font-size:.7rem;padding:4px 8px">Sair</button>
     </div>
   </div>
 
@@ -125,37 +133,28 @@
     <!-- EMPRÉSTIMOS -->
     <section id="sec-emprestimos" class="section">
       <div class="section-header"><h2>Empréstimos</h2><button class="btn-primary" onclick="prepararModalEmprestimo();abrirModal('modal-emprestimo')">+ Novo Empréstimo</button></div>
-      <div class="emp-toolbar-principal">
+      <div class="emp-toolbar">
         <input type="text" id="search-emp" placeholder="Nome da pessoa ou livro..." oninput="aplicarFiltrosEmp()">
+        <div class="filter-date-group">
+          <label class="filter-date-label">Data do empréstimo <button class="btn-clear-date" onclick="limparData('filter-emp-data-emp')" title="Limpar">✕</button></label>
+          <input type="date" id="filter-emp-data-emp" onchange="aplicarFiltrosEmp()">
+        </div>
+        <div class="filter-date-group">
+          <label class="filter-date-label">Previsão de devolução <button class="btn-clear-date" onclick="limparData('filter-emp-data-dev')" title="Limpar">✕</button></label>
+          <input type="date" id="filter-emp-data-dev" onchange="aplicarFiltrosEmp()">
+        </div>
+        <select id="filter-emp-status" onchange="aplicarFiltrosEmp()">
+          <option value="todos">Todos</option>
+          <option value="ativo">Ativos</option>
+          <option value="atrasado">Atrasados</option>
+          <option value="devolvido">Devolvidos</option>
+        </select>
         <select id="sort-emp" onchange="aplicarFiltrosEmp()">
           <option value="data-desc">Mais recentes primeiro</option>
           <option value="data-asc">Mais antigos primeiro</option>
           <option value="nome-az">Nome A → Z</option>
           <option value="nome-za">Nome Z → A</option>
         </select>
-        <button class="btn-filtros-avancados" onclick="toggleFiltrosAvancados()" id="btn-filtros-avancados">
-          ⚙️ Filtros <span id="filtros-badge" class="filtros-badge hidden">!</span>
-        </button>
-      </div>
-      <div class="filtros-avancados hidden" id="filtros-avancados">
-        <div class="filter-date-group">
-          <label class="filter-date-label">Data do empréstimo <button class="btn-clear-date" onclick="limparData('filter-emp-data-emp')" title="Limpar">✕</button></label>
-          <input type="date" id="filter-emp-data-emp" onchange="aplicarFiltrosEmp();atualizarBadgeFiltros()">
-        </div>
-        <div class="filter-date-group">
-          <label class="filter-date-label">Previsão de devolução <button class="btn-clear-date" onclick="limparData('filter-emp-data-dev')" title="Limpar">✕</button></label>
-          <input type="date" id="filter-emp-data-dev" onchange="aplicarFiltrosEmp();atualizarBadgeFiltros()">
-        </div>
-        <div class="filter-date-group">
-          <label class="filter-date-label">Status</label>
-          <select id="filter-emp-status" onchange="aplicarFiltrosEmp();atualizarBadgeFiltros()">
-            <option value="todos">Todos</option>
-            <option value="ativo">Ativos</option>
-            <option value="atrasado">Atrasados</option>
-            <option value="devolvido">Devolvidos</option>
-          </select>
-        </div>
-        <button class="btn-limpar-filtros" onclick="limparFiltrosAvancados()">Limpar filtros</button>
       </div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Pessoa</th><th>Livros</th><th>Funcionário</th><th>Emprestado</th><th>Previsão</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tbody-emprestimos"></tbody></table></div>
       <div class="pagination-bar" id="pag-emprestimos"></div>
