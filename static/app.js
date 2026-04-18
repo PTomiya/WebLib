@@ -14,6 +14,43 @@ function limparData(id) {
   var el = document.getElementById(id);
   if (el) { el.value = ''; el.dispatchEvent(new Event('change')); }
 }
+function limparDataFiltro(inputId, painelId, badgeId) {
+  var el = document.getElementById(inputId);
+  if (el) { el.value = ''; el.dispatchEvent(new Event('change')); }
+  atualizarBadge(painelId, badgeId);
+}
+function toggleFiltros(painelId) {
+  var painel = document.getElementById(painelId);
+  var btnId = painelId.replace('filtros-','btn-filtros-');
+  var btn = document.getElementById(btnId);
+  if (!painel) return;
+  var aberto = !painel.classList.contains('hidden');
+  painel.classList.toggle('hidden', aberto);
+  if (btn) btn.classList.toggle('ativo', !aberto);
+}
+function atualizarBadge(painelId, badgeId) {
+  var badge = document.getElementById(badgeId);
+  if (!badge) return;
+  var painel = document.getElementById(painelId);
+  if (!painel) return;
+  var temFiltro = false;
+  painel.querySelectorAll('input[type="date"]').forEach(function(el){ if(el.value) temFiltro=true; });
+  painel.querySelectorAll('select').forEach(function(el){ if(el.value && el.value!=='todos') temFiltro=true; });
+  badge.classList.toggle('hidden', !temFiltro);
+  var btnId = painelId.replace('filtros-','btn-filtros-');
+  var btn = document.getElementById(btnId);
+  if (btn) btn.classList.toggle('ativo', temFiltro);
+}
+function limparTodosFiltros(painelId, badgeId) {
+  var painel = document.getElementById(painelId);
+  if (!painel) return;
+  painel.querySelectorAll('input[type="date"]').forEach(function(el){ el.value=''; });
+  painel.querySelectorAll('select').forEach(function(el){ el.selectedIndex=0; });
+  atualizarBadge(painelId, badgeId);
+  // Trigger appropriate filter function
+  if(painelId.includes('emp')) aplicarFiltrosEmp();
+  else if(painelId.includes('hist')) filtrarHistorico();
+}
 /* ══ TEMA ══ */
 function setTema(t) {
   localStorage.setItem('bsys_tema', t); aplicarTema(t);
@@ -117,6 +154,15 @@ function aplicarSessao(f) {
   document.getElementById('user-nome').textContent = f.nome;
   document.getElementById('user-email').textContent = '@'+f.username;
   document.getElementById('user-avatar').textContent = f.nome[0].toUpperCase();
+  // Mobile topbar user info
+  var ma=document.getElementById('mob-avatar'), mn=document.getElementById('mob-nome'), me=document.getElementById('mob-email');
+  if(ma) ma.textContent=f.nome[0].toUpperCase();
+  if(mn) mn.textContent=f.nome;
+  if(me) me.textContent='@'+f.username;
+  // Mobile nav: hide funcionarios/config for non-admin
+  var mf=document.getElementById('mob-nav-func'), mc=document.getElementById('mob-nav-config');
+  if(mf) mf.style.display='';
+  if(mc) mc.style.display=f.admin?'':'none';
   // Config e funcionários: qualquer um acessa, mas controle dentro da página
   document.getElementById('nav-config').style.display = f.admin ? '' : 'none';
   document.getElementById('nav-funcionarios').style.display = '';
@@ -187,16 +233,17 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ══ NAVEGAÇÃO ══ */
 function showSection(nome) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  // Mobile nav sync
-  document.querySelectorAll('.mobile-nav a').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.mob-nav-item').forEach(n=>n.classList.remove('active'));
   var sec = document.getElementById('sec-'+nome);
   if (sec) sec.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>{ if(n.getAttribute('onclick')?.includes("'"+nome+"'")) n.classList.add('active'); });
-  document.querySelectorAll('.mobile-nav a').forEach(n=>{ if(n.getAttribute('onclick')?.includes("'"+nome+"'")) n.classList.add('active'); });
+  document.querySelectorAll('.nav-item,.mob-nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')?.includes("'"+nome+"'")) n.classList.add('active');
+  });
   ({dashboard:carregarDashboard,livros:carregarLivros,pessoas:carregarPessoas,
     emprestimos:carregarEmprestimos,historico:carregarHistorico,
     funcionarios:carregarFuncionarios,config:carregarConfig})[nome]?.();
+  // Scroll to top on mobile
+  if(window.innerWidth<=767) window.scrollTo(0,0);
 }
 
 /* ══ DASHBOARD ══ */
@@ -250,11 +297,14 @@ function renderLivros(lista) {
   const {itens,pag,totalPags,total,inicio,fim} = paginar(lista, _pagAtual.livros);
   tbody.innerHTML=itens.map(l=>`
     <tr class="${l.inativo?'row-inativo':''}">
-      <td><strong>${l.titulo}</strong>${l.inativo?' <span class="badge badge-inativo">Inativo</span>':''}</td>
-      <td>${l.autor}</td><td>${l.isbn||'–'}</td>
-      <td>${l.editora||'–'}</td><td>${l.ano||'–'}</td><td>${l.quantidade}</td>
-      <td><span class="badge ${l.disponivel>0?'badge-green':'badge-red'}">${l.inativo?'–':l.disponivel}</span></td>
-      <td><div class="tbl-actions">
+      <td data-label="Título"><strong>${l.titulo}</strong>${l.inativo?' <span class="badge badge-inativo">Inativo</span>':''}</td>
+      <td data-label="Autor">${l.autor}</td>
+      <td data-label="ISBN">${l.isbn||'–'}</td>
+      <td data-label="Editora">${l.editora||'–'}</td>
+      <td data-label="Ano">${l.ano||'–'}</td>
+      <td data-label="Estoque">${l.quantidade}</td>
+      <td data-label="Disponível"><span class="badge ${l.disponivel>0?'badge-green':'badge-red'}">${l.inativo?'–':l.disponivel}</span></td>
+      <td data-label="Ações"><div class="tbl-actions">
         ${!l.inativo?`<button class="btn-icon" onclick="editarLivro(${l.id})">✏️ Editar</button>`:''}
         ${!l.inativo?`<button class="btn-icon danger" onclick="inativarRegistro('livros',${l.id})">⛔ Inativar</button>`
                     :`<button class="btn-icon" onclick="reativarRegistro('livros',${l.id})">✅ Reativar</button>`}

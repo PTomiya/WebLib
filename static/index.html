@@ -24,23 +24,25 @@
 
 <!-- APP -->
 <div id="page-app" class="page">
-  <!-- Mobile topbar (visível em ≤ 767px) -->
+  <!-- Mobile topbar (≤767px) -->
   <div class="mobile-topbar" id="mobile-topbar">
-    <span class="mobile-logo">📚 BiblioSys</span>
-    <nav class="mobile-nav" id="mobile-nav">
-      <a href="#" onclick="showSection('dashboard')">Dashboard</a>
-      <a href="#" onclick="showSection('livros')">Livros</a>
-      <a href="#" onclick="showSection('pessoas')">Pessoas</a>
-      <a href="#" onclick="showSection('emprestimos')">Empréstimos</a>
-      <a href="#" onclick="showSection('historico')">Histórico</a>
-      <a href="#" id="mob-nav-func" onclick="showSection('funcionarios')">Funcionários</a>
-      <a href="#" id="mob-nav-config" onclick="showSection('config')">Config.</a>
-    </nav>
-    <div class="mobile-user">
-      <div class="user-avatar" id="mob-user-avatar">A</div>
-      <div class="user-info"><span id="mob-user-nome">Admin</span><small id="mob-user-email">@admin</small></div>
-      <button class="btn-sair" onclick="fazerLogout()" style="font-size:.7rem;padding:4px 8px">Sair</button>
+    <div class="mob-header">
+      <div class="mob-brand">📚 <span>BiblioSys</span></div>
+      <div class="mob-user-row">
+        <div class="user-avatar" id="mob-avatar">A</div>
+        <div class="user-info"><span id="mob-nome">Admin</span><small id="mob-email">@admin</small></div>
+        <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+      </div>
     </div>
+    <nav class="mob-nav" id="mob-nav">
+      <a href="#" class="mob-nav-item active" onclick="showSection('dashboard')">Dashboard</a>
+      <a href="#" class="mob-nav-item" onclick="showSection('livros')">Livros</a>
+      <a href="#" class="mob-nav-item" onclick="showSection('pessoas')">Pessoas</a>
+      <a href="#" class="mob-nav-item" onclick="showSection('emprestimos')">Empréstimos</a>
+      <a href="#" class="mob-nav-item" onclick="showSection('historico')">Histórico</a>
+      <a href="#" class="mob-nav-item" id="mob-nav-func" onclick="showSection('funcionarios')">Funcionários</a>
+      <a href="#" class="mob-nav-item" id="mob-nav-config" onclick="showSection('config')">Config.</a>
+    </nav>
   </div>
 
   <aside class="sidebar">
@@ -110,21 +112,15 @@
 
     <!-- LIVROS -->
     <section id="sec-livros" class="section">
-      <div class="section-header"><h2>Livros</h2><div style="display:flex;gap:8px;align-items:center">
-        <label class="toggle-inativo-label"><input type="checkbox" id="show-inativos-livros" onchange="carregarLivros()"> Mostrar inativos</label>
-        <button class="btn-primary" onclick="limparFormLivro();abrirModal('modal-livro')">+ Novo Livro</button>
-      </div></div>
+      <div class="section-header"><h2>Livros</h2><div class="section-header-actions"><label class="toggle-inativo-label"><input type="checkbox" id="show-inativos-livros" onchange="carregarLivros()"> Mostrar inativos</label><button class="btn-primary" onclick="limparFormLivro();abrirModal('modal-livro')">+ Novo Livro</button></div></div>
       <div class="search-bar"><input type="text" id="search-livros" placeholder="Buscar por título, autor, editora ou ano..." oninput="filtrarLivros()"></div>
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>Título</th><th>Autor</th><th>ISBN</th><th>Editora</th><th>Ano</th><th>Estoque</th><th>Disponível</th><th>Ações</th></tr></thead><tbody id="tbody-livros"></tbody></table></div>
+      <div class="table-wrap"><table class="data-table" data-cards="true"><thead><tr><th>Título</th><th>Autor</th><th>ISBN</th><th>Editora</th><th>Ano</th><th>Estoque</th><th>Disponível</th><th>Ações</th></tr></thead><tbody id="tbody-livros"></tbody></table></div>
       <div class="pagination-bar" id="pag-livros"></div>
     </section>
 
     <!-- PESSOAS -->
     <section id="sec-pessoas" class="section">
-      <div class="section-header"><h2>Pessoas</h2><div style="display:flex;gap:8px;align-items:center">
-        <label class="toggle-inativo-label"><input type="checkbox" id="show-inativos-pessoas" onchange="carregarPessoas()"> Mostrar inativos</label>
-        <button class="btn-primary" onclick="limparFormPessoa();abrirModal('modal-pessoa')">+ Nova Pessoa</button>
-      </div></div>
+      <div class="section-header"><h2>Pessoas</h2><div class="section-header-actions"><label class="toggle-inativo-label"><input type="checkbox" id="show-inativos-pessoas" onchange="carregarPessoas()"> Mostrar inativos</label><button class="btn-primary" onclick="limparFormPessoa();abrirModal('modal-pessoa')">+ Nova Pessoa</button></div></div>
       <div class="search-bar"><input type="text" id="search-pessoas" placeholder="Buscar por nome ou documento..." oninput="filtrarPessoas()"></div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Documento</th><th>Ações</th></tr></thead><tbody id="tbody-pessoas"></tbody></table></div>
       <div class="pagination-bar" id="pag-pessoas"></div>
@@ -132,29 +128,38 @@
 
     <!-- EMPRÉSTIMOS -->
     <section id="sec-emprestimos" class="section">
-      <div class="section-header"><h2>Empréstimos</h2><button class="btn-primary" onclick="prepararModalEmprestimo();abrirModal('modal-emprestimo')">+ Novo Empréstimo</button></div>
-      <div class="emp-toolbar">
-        <input type="text" id="search-emp" placeholder="Nome da pessoa ou livro..." oninput="aplicarFiltrosEmp()">
-        <div class="filter-date-group">
-          <label class="filter-date-label">Data do empréstimo <button class="btn-clear-date" onclick="limparData('filter-emp-data-emp')" title="Limpar">✕</button></label>
-          <input type="date" id="filter-emp-data-emp" onchange="aplicarFiltrosEmp()">
-        </div>
-        <div class="filter-date-group">
-          <label class="filter-date-label">Previsão de devolução <button class="btn-clear-date" onclick="limparData('filter-emp-data-dev')" title="Limpar">✕</button></label>
-          <input type="date" id="filter-emp-data-dev" onchange="aplicarFiltrosEmp()">
-        </div>
-        <select id="filter-emp-status" onchange="aplicarFiltrosEmp()">
-          <option value="todos">Todos</option>
-          <option value="ativo">Ativos</option>
-          <option value="atrasado">Atrasados</option>
-          <option value="devolvido">Devolvidos</option>
-        </select>
-        <select id="sort-emp" onchange="aplicarFiltrosEmp()">
+      <div class="section-header"><h2>Empréstimos</h2><div class="section-header-actions"><button class="btn-primary" onclick="prepararModalEmprestimo();abrirModal('modal-emprestimo')">+ Novo Empréstimo</button></div></div>
+      <div class="toolbar-principal">
+        <input class="toolbar-search" type="text" id="search-emp" placeholder="Buscar por nome da pessoa ou livro..." oninput="aplicarFiltrosEmp()">
+        <select class="toolbar-select" id="sort-emp" onchange="aplicarFiltrosEmp()">
           <option value="data-desc">Mais recentes primeiro</option>
           <option value="data-asc">Mais antigos primeiro</option>
           <option value="nome-az">Nome A → Z</option>
           <option value="nome-za">Nome Z → A</option>
         </select>
+        <button class="btn-filtros" onclick="toggleFiltros('filtros-emp')" id="btn-filtros-emp">
+          ⚙️ Filtros <span class="filtros-badge hidden" id="badge-filtros-emp">!</span>
+        </button>
+      </div>
+      <div class="filtros-painel hidden" id="filtros-emp">
+        <div class="filter-date-group">
+          <label class="filter-date-label">Data do empréstimo <button class="btn-clear-date" onclick="limparDataFiltro('filter-emp-data-emp','filtros-emp','badge-filtros-emp')">✕</button></label>
+          <input type="date" id="filter-emp-data-emp" onchange="aplicarFiltrosEmp();atualizarBadge('filtros-emp','badge-filtros-emp')">
+        </div>
+        <div class="filter-date-group">
+          <label class="filter-date-label">Previsão de devolução <button class="btn-clear-date" onclick="limparDataFiltro('filter-emp-data-dev','filtros-emp','badge-filtros-emp')">✕</button></label>
+          <input type="date" id="filter-emp-data-dev" onchange="aplicarFiltrosEmp();atualizarBadge('filtros-emp','badge-filtros-emp')">
+        </div>
+        <div class="filter-date-group">
+          <label class="filter-date-label">Status</label>
+          <select id="filter-emp-status" onchange="aplicarFiltrosEmp();atualizarBadge('filtros-emp','badge-filtros-emp')">
+            <option value="todos">Todos os status</option>
+            <option value="ativo">Ativos</option>
+            <option value="atrasado">Atrasados</option>
+            <option value="devolvido">Devolvidos</option>
+          </select>
+        </div>
+        <button class="btn-limpar-filtros" onclick="limparTodosFiltros('filtros-emp','badge-filtros-emp')">Limpar filtros</button>
       </div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Pessoa</th><th>Livros</th><th>Funcionário</th><th>Emprestado</th><th>Previsão</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tbody-emprestimos"></tbody></table></div>
       <div class="pagination-bar" id="pag-emprestimos"></div>
@@ -163,16 +168,22 @@
     <!-- HISTÓRICO -->
     <section id="sec-historico" class="section">
       <div class="section-header"><h2>Histórico de Empréstimos</h2></div>
-      <div class="emp-toolbar">
-        <input type="text" id="search-hist" placeholder="Pessoa ou livro..." oninput="filtrarHistorico()">
+      <div class="toolbar-principal">
+        <input class="toolbar-search" type="text" id="search-hist" placeholder="Buscar por pessoa ou livro..." oninput="filtrarHistorico()">
+        <button class="btn-filtros" onclick="toggleFiltros('filtros-hist')" id="btn-filtros-hist">
+          ⚙️ Filtros <span class="filtros-badge hidden" id="badge-filtros-hist">!</span>
+        </button>
+      </div>
+      <div class="filtros-painel hidden" id="filtros-hist">
         <div class="filter-date-group">
-          <label class="filter-date-label">Data do empréstimo <button class="btn-clear-date" onclick="limparData('hist-data-emp')" title="Limpar">✕</button></label>
-          <input type="date" id="hist-data-emp" onchange="filtrarHistorico()">
+          <label class="filter-date-label">Data do empréstimo <button class="btn-clear-date" onclick="limparDataFiltro('hist-data-emp','filtros-hist','badge-filtros-hist')">✕</button></label>
+          <input type="date" id="hist-data-emp" onchange="filtrarHistorico();atualizarBadge('filtros-hist','badge-filtros-hist')">
         </div>
         <div class="filter-date-group">
-          <label class="filter-date-label">Data de devolução <button class="btn-clear-date" onclick="limparData('hist-data-dev')" title="Limpar">✕</button></label>
-          <input type="date" id="hist-data-dev" onchange="filtrarHistorico()">
+          <label class="filter-date-label">Data de devolução <button class="btn-clear-date" onclick="limparDataFiltro('hist-data-dev','filtros-hist','badge-filtros-hist')">✕</button></label>
+          <input type="date" id="hist-data-dev" onchange="filtrarHistorico();atualizarBadge('filtros-hist','badge-filtros-hist')">
         </div>
+        <button class="btn-limpar-filtros" onclick="limparTodosFiltros('filtros-hist','badge-filtros-hist')">Limpar filtros</button>
       </div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Pessoa</th><th>Livro</th><th>Data Empréstimo</th><th>Previsão Devolução</th><th>Data Devolução</th><th>Situação</th></tr></thead><tbody id="tbody-historico"></tbody></table></div>
       <div class="pagination-bar" id="pag-historico"></div>
@@ -180,10 +191,7 @@
 
     <!-- FUNCIONÁRIOS -->
     <section id="sec-funcionarios" class="section">
-      <div class="section-header"><h2>Funcionários</h2><div style="display:flex;gap:8px;align-items:center">
-        <label class="toggle-inativo-label"><input type="checkbox" id="show-inativos-funcionarios" onchange="carregarFuncionarios()"> Mostrar inativos</label>
-        <button class="btn-primary" id="btn-novo-func" onclick="limparFormFuncionario();abrirModal('modal-funcionario')">+ Novo Funcionário</button>
-      </div></div>
+      <div class="section-header"><h2>Funcionários</h2><div class="section-header-actions"><label class="toggle-inativo-label"><input type="checkbox" id="show-inativos-funcionarios" onchange="carregarFuncionarios()"> Mostrar inativos</label><button class="btn-primary" id="btn-novo-func" onclick="limparFormFuncionario();abrirModal('modal-funcionario')">+ Novo Funcionário</button></div></div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>Nome</th><th>Usuário</th><th>Email</th><th>Perfil</th><th>Cadastrado em</th><th>Ações</th></tr></thead><tbody id="tbody-funcionarios"></tbody></table></div>
       <div class="pagination-bar" id="pag-funcionarios"></div>
     </section>
@@ -192,7 +200,7 @@
     <section id="sec-config" class="section">
       <div class="section-header">
         <h2>Configurações</h2>
-        <button class="btn-primary" id="btn-salvar-config" onclick="salvarConfig()" disabled style="opacity:.35">Salvar</button>
+        <div class="section-header-actions"><button class="btn-primary" id="btn-salvar-config" onclick="salvarConfig()" disabled style="opacity:.35">Salvar</button></div>
       </div>
       <div class="config-grid">
         <div class="config-card">
