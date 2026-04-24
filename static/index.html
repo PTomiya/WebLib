@@ -24,25 +24,58 @@
 
 <!-- APP -->
 <div id="page-app" class="page">
-  <!-- Mobile topbar (≤767px) -->
+  <!-- Mobile topbar (≤991px) -->
   <div class="mobile-topbar" id="mobile-topbar">
     <div class="mob-header">
       <div class="mob-brand">📚 <span>BiblioSys</span></div>
-      <div class="mob-user-row">
-        <div class="user-avatar" id="mob-avatar">A</div>
-        <div class="user-info"><span id="mob-nome">Admin</span><small id="mob-email">@admin</small></div>
-        <button class="btn-sair" onclick="fazerLogout()">Sair</button>
-      </div>
+      <button class="mob-menu-btn" onclick="toggleMobMenu()" id="mob-menu-btn" aria-label="Menu">
+        <span class="mob-menu-icon" id="mob-menu-icon">☰</span>
+      </button>
     </div>
-    <nav class="mob-nav" id="mob-nav">
-      <a href="#" class="mob-nav-item active" onclick="showSection('dashboard')">Dashboard</a>
-      <a href="#" class="mob-nav-item" onclick="showSection('livros')">Livros</a>
-      <a href="#" class="mob-nav-item" onclick="showSection('pessoas')">Pessoas</a>
-      <a href="#" class="mob-nav-item" onclick="showSection('emprestimos')">Empréstimos</a>
-      <a href="#" class="mob-nav-item" onclick="showSection('historico')">Histórico</a>
-      <a href="#" class="mob-nav-item" id="mob-nav-func" onclick="showSection('funcionarios')">Funcionários</a>
-      <a href="#" class="mob-nav-item" id="mob-nav-config" onclick="showSection('config')">Config.</a>
+  </div>
+
+  <!-- Overlay do menu -->
+  <div class="mob-menu-overlay hidden" id="mob-menu-overlay" onclick="fecharMobMenu()"></div>
+
+  <!-- Menu lateral deslizante -->
+  <div class="mob-menu-drawer hidden" id="mob-menu-drawer">
+    <div class="mob-drawer-header">
+      <span class="mob-brand">📚 BiblioSys</span>
+      <button class="mob-drawer-close" onclick="fecharMobMenu()">✕</button>
+    </div>
+    <nav class="mob-drawer-nav">
+      <a href="#" class="mob-drawer-item active" id="mdni-dashboard" onclick="showSection('dashboard');fecharMobMenu()">
+        <span class="mob-drawer-icon">◉</span> Dashboard
+      </a>
+      <a href="#" class="mob-drawer-item" id="mdni-livros" onclick="showSection('livros');fecharMobMenu()">
+        <span class="mob-drawer-icon">📕</span> Livros
+      </a>
+      <a href="#" class="mob-drawer-item" id="mdni-pessoas" onclick="showSection('pessoas');fecharMobMenu()">
+        <span class="mob-drawer-icon">👤</span> Pessoas
+      </a>
+      <a href="#" class="mob-drawer-item" id="mdni-emprestimos" onclick="showSection('emprestimos');fecharMobMenu()">
+        <span class="mob-drawer-icon">🔖</span> Empréstimos
+      </a>
+      <a href="#" class="mob-drawer-item" id="mdni-historico" onclick="showSection('historico');fecharMobMenu()">
+        <span class="mob-drawer-icon">📋</span> Histórico
+      </a>
+      <a href="#" class="mob-drawer-item" id="mdni-funcionarios" onclick="showSection('funcionarios');fecharMobMenu()">
+        <span class="mob-drawer-icon">👥</span> Funcionários
+      </a>
+      <a href="#" class="mob-drawer-item" id="mdni-config" onclick="showSection('config');fecharMobMenu()">
+        <span class="mob-drawer-icon">⚙️</span> Configurações
+      </a>
     </nav>
+    <div class="mob-drawer-footer">
+      <div class="mob-drawer-user">
+        <div class="user-avatar" id="mob-avatar">A</div>
+        <div class="user-info">
+          <span id="mob-nome">Admin</span>
+          <small id="mob-email">@admin</small>
+        </div>
+      </div>
+      <button class="btn-sair" style="width:100%;margin-top:10px" onclick="fazerLogout()">Sair do sistema</button>
+    </div>
   </div>
 
   <aside class="sidebar">

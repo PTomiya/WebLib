@@ -159,10 +159,13 @@ function aplicarSessao(f) {
   if(ma) ma.textContent=f.nome[0].toUpperCase();
   if(mn) mn.textContent=f.nome;
   if(me) me.textContent='@'+f.username;
-  // Mobile nav: hide funcionarios/config for non-admin
+  // Mobile nav: hide funcionarios/config para não-admin
   var mf=document.getElementById('mob-nav-func'), mc=document.getElementById('mob-nav-config');
-  if(mf) mf.style.display='';
-  if(mc) mc.style.display=f.admin?'':'none';
+  // Drawer: ocultar funcionários/config para não-admin
+  var mdf = document.getElementById('mdni-funcionarios');
+  var mdc = document.getElementById('mdni-config');
+  if (mdf) mdf.style.display = '';
+  if (mdc) mdc.style.display = f.admin ? '' : 'none';
   // Config e funcionários: qualquer um acessa, mas controle dentro da página
   document.getElementById('nav-config').style.display = f.admin ? '' : 'none';
   document.getElementById('nav-funcionarios').style.display = '';
@@ -205,6 +208,25 @@ function confirmarLogout() {
   if (graficoRosca) { graficoRosca.destroy(); graficoRosca=null; }
 }
 
+function toggleMobMenu() {
+  var drawer = document.getElementById('mob-menu-drawer');
+  var overlay = document.getElementById('mob-menu-overlay');
+  var aberto = !drawer.classList.contains('hidden');
+  if (aberto) {
+    fecharMobMenu();
+  } else {
+    drawer.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function fecharMobMenu() {
+  document.getElementById('mob-menu-drawer').classList.add('hidden');
+  document.getElementById('mob-menu-overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
 /* ══ INIT ══ */
 document.addEventListener('DOMContentLoaded', () => {
   aplicarTema(localStorage.getItem('bsys_tema')||'dark');
@@ -233,10 +255,10 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ══ NAVEGAÇÃO ══ */
 function showSection(nome) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-item,.mob-nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.mob-nav-item,.mob-drawer-item').forEach(n=>n.classList.remove('active'));
   var sec = document.getElementById('sec-'+nome);
   if (sec) sec.classList.add('active');
-  document.querySelectorAll('.nav-item,.mob-nav-item').forEach(n=>{
+  document.querySelectorAll('.nav-item,.mob-nav-item,.mob-drawer-item').forEach(n=>{
     if(n.getAttribute('onclick')?.includes("'"+nome+"'")) n.classList.add('active');
   });
   ({dashboard:carregarDashboard,livros:carregarLivros,pessoas:carregarPessoas,
